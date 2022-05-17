@@ -30,6 +30,14 @@ data:
   # Include prometheus configuration file, setup to monitor all the
   # Kubernetes pods with the "scrape=true" annotation.
   prometheus.yml: |
+{{- if .Values.monitoring.alert_manager }}
+    rule_files:
+      - 'rules.yml'
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets: ['{{ template "pulsar.fullname" . }}-{{ .Values.alert_manager.component }}:{{ .Values.alert_manager.port }}']
+{{- end }}
     global:
       scrape_interval: 15s
     scrape_configs:
@@ -63,4 +71,15 @@ data:
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: kubernetes_pod_name
+  rules.yml: |
+    groups:
+    - name: example
+      rules:
+      - alert: HighSystemLoad
+        expr: node_load1 > 10
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: High system load average past 10 minutes
 {{- end }}

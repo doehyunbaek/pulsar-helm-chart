@@ -192,6 +192,10 @@ images:
     repository: prom/node-exporter
     tag: v0.16.0
     pullPolicy: "IfNotPresent"
+  alert_manager:
+    repository: prom/alertmanager
+    tag: v0.20.0
+    pullPolicy: IfNotPresent
   grafana:
     repository: streamnative/apache-pulsar-grafana-dashboard-k8s
     tag: 0.0.16
@@ -1108,6 +1112,44 @@ node_exporter:
     cpu: 10m
     memory: 50Mi
 
+alert_manager:
+  component: alert-manager
+  port: 9093
+  annotations: {}
+  replicaCount: 1
+  gracePeriod: 0
+  resources:
+    requests:
+      memory: 250Mi
+      cpu: 0.1
+  service:
+    # spec:
+    # clusterIP: None
+    annotations: {}
+  securityContext:
+    runAsUser: 65534
+    runAsNonRoot: true
+    runAsGroup: 65534
+    fsGroup: 65534
+  probe:
+    readiness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 30
+      periodSeconds: 10
+  # alert manager config
+  config:
+    global:
+      resolve_timeout: 1m
+    route:
+      group_interval: 1m
+      repeat_interval: 10m
+      receiver: 'teams-notifications'
+    receivers:
+      - name: 'teams-notifications'
+        webhook_configs:
+        - url: http://192.168.0.11:8089
+          
 ## Components Stack: pulsar_manager
 ## templates/pulsar-manager.yaml
 ##
